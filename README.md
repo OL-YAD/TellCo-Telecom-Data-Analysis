@@ -20,7 +20,7 @@ TellCo-Telecom-Analysis/
 ├── .github/
 │   └── workflows/
 │       └── unittests.yml   # GitHub Actions
-├── .gitignore              # directories to be ignored by git
+├── .gitignore              # files and folders to be ignored by git
 ├── requirements.txt        # contains dependencies for the project
 ├── README.md               # Documentation for the projects
 ├── src/

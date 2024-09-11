@@ -103,5 +103,3 @@ def elbow_method(df: pd.DataFrame, max_k: int = 10) -> plt.Figure:
     
 
     return fig
-
-

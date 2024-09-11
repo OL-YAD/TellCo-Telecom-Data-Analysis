@@ -10,8 +10,12 @@ sys.path.append(os.path.abspath(os.path.join('..')))
 # Import functions from your script file
 from scripts.data_processing import (
     get_top_handsets, get_top_manufacturers, get_top_handsets_per_manufacturer,
-    aggregate_user_behavior, segment_users, perform_pca
+    aggregate_user_behavior, segment_users, perform_pca, interpret_pca
 )
+
+from scripts.user_engagement import *
+from scripts.experience_analytics import *
+from scripts.data_processing import *
 #correlation_analysis
 # Load your data
 @st.cache_data
@@ -23,20 +27,21 @@ def load_data():
 df = load_data()
 
 st.title("Telecom Data Analysis Dashboard")
+st.write(" Note: This Streamlit app shows the some visualizations from  the analysis. for more refer to the notebook file.")
 
 # Sidebar for task selection
-task = st.sidebar.selectbox("Select Task", ["Task 1: User Overview", "Task 2: User Engagement"])
+task = st.sidebar.selectbox("Select Task", ["User Overview Analysis", "User Engagement Analysis","User Experience Analytics"])
 
-if task == "Task 1: User Overview":
-        st.header("Task 1: User Overview Analysis")
+if task == "User Overview Analysis":
+        st.header(" User Overview Analysis")
 
-        st.header("Task 1: User Overview Analysis")
 
         # 1. Data field description
         st.subheader("1. Data Field Description")
         st.dataframe(df.dtypes.reset_index().rename(columns={0: 'Data Type', 'index': 'Field'}))
 
         # 2. Top 10 handsets
+
         st.subheader("2. Top 10 Handsets Used by Customers")
         top_10_handsets = get_top_handsets(df)
         fig, ax = plt.subplots(figsize=(10, 6))
@@ -79,104 +84,53 @@ if task == "Task 1: User Overview":
         plt.ylabel('Total Data Usage')
         st.pyplot(fig)
 
-        # 6. Univariate distribution
-        st.subheader("6. Univariate Distribution")
-        numeric_columns = user_behavior.select_dtypes(include=[np.number]).columns
-        selected_column = st.selectbox("Select a column for univariate analysis", numeric_columns)
-        fig, ax = plt.subplots(figsize=(10, 6))
-        sns.histplot(user_behavior[selected_column], kde=True, ax=ax)
-        plt.title(f'Distribution of {selected_column}')
-        st.pyplot(fig)
+        # 6. Correlation heatmap
+        # Correlation Analysis
+        # total data for each category
+        st.subheader("6. Correlation Matrix of Application Data Usage ")
+        df["Youtube_Total_Data"] = df["Youtube DL (Bytes)"] + df["Youtube UL (Bytes)"]
+        df["Google_Total_Data"] = df["Google DL (Bytes)"] + df["Google UL (Bytes)"]
+        df["Email_Total_Data"] = df["Email DL (Bytes)"] + df["Email UL (Bytes)"]
+        df["Social_Media_Total_Data"] = df["Social Media DL (Bytes)"] + df["Social Media UL (Bytes)"]
+        df["Netflix_Total_Data"] = df["Netflix DL (Bytes)"] + df["Netflix UL (Bytes)"]
+        df["Gaming_Total_Data"] = df["Gaming DL (Bytes)"] + df["Gaming UL (Bytes)"]
+        df["Other_Total_Data"] = df["Other DL (Bytes)"] + df["Other UL (Bytes)"]
+        df["Total_UL_and_DL"] = df["Total UL (Bytes)"] + df["Total DL (Bytes)"]
 
-        # 7. Bivariate distribution
-        st.subheader("7. Bivariate Distribution")
-        x_column = st.selectbox("Select X-axis column", numeric_columns, key="x_column")
-        y_column = st.selectbox("Select Y-axis column", numeric_columns, key="y_column")
-        fig, ax = plt.subplots(figsize=(10, 6))
-        sns.scatterplot(x=x_column, y=y_column, data=user_behavior, ax=ax)
-        plt.title(f'{x_column} vs {y_column}')
-        st.pyplot(fig)
 
-        # 8. Correlation heatmap
-        st.subheader("8. Correlation Heatmap")
-        app_columns = ['Social Media_data', 'Google_data', 'Email_data', 'Youtube_data', 'Netflix_data', 'Gaming_data', 'Other_data']
-        correlation_matrix = correlation_analysis(user_behavior, app_columns)
-        fig, ax = plt.subplots(figsize=(12, 10))
-        sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', ax=ax)
+        df_corr = df[['Youtube_Total_Data', 'Google_Total_Data','Email_Total_Data', 'Social_Media_Total_Data',
+              'Netflix_Total_Data','Gaming_Total_Data','Other_Total_Data']].corr()
+        
+        fig,ax = plt.subplots(figsize=(10, 10))
+        sns.heatmap(df_corr, annot=True, cmap='coolwarm', fmt='.2f', linewidths=0.5)
         plt.title('Correlation Matrix of Application Data Usage')
         st.pyplot(fig)
 
-        # 9. Principal Component Analysis
-        st.subheader("9. Principal Component Analysis")
-        pca_result, explained_variance = perform_pca(user_behavior[app_columns])
-        fig, ax = plt.subplots(figsize=(10, 6))
-        plt.bar(range(1, len(explained_variance) + 1), explained_variance)
-        plt.title('Scree Plot')
-        plt.xlabel('Principal Component')
-        plt.ylabel('Explained Variance Ratio')
-        st.pyplot(fig)
 
-        st.write("This Streamlit app shows the visualizations for Task 1. You can add more tasks and visualizations as needed.")
+        st.write("This Streamlit app shows the some visualizations from Task 1.")
+        st.sidebar.info("Select a task from the dropdown menu to view different analyses.")
 
-elif task == "Task 2: User Engagement":
-    st.header("Task 2: User Engagement Analysis")
+elif task == "User Engagement Analysis":
+    st.header("User Engagement Analysis")
 
-    # Aggregate metrics per customer
-    @st.cache_data
-    def aggregate_metrics_per_customer(df):
-        aggregated_data = df.groupby('MSISDN/Number').agg({
-            'Bearer Id': 'count',
-            'Dur. (ms)': 'sum',
-            'Total DL (Bytes)': 'sum',
-            'Total UL (Bytes)': 'sum'
-        }).rename(columns={
-            'Bearer Id': 'Sessions',
-            'Dur. (ms)': 'Duration',
-            'Total DL (Bytes)': 'Download',
-            'Total UL (Bytes)': 'Upload'
-        })
-        aggregated_data['Total Traffic'] = aggregated_data['Download'] + aggregated_data['Upload']
-        
-        top_10_customers = {
-            'Sessions': aggregated_data.nlargest(10, 'Sessions'),
-            'Duration': aggregated_data.nlargest(10, 'Duration'),
-            'Total Traffic': aggregated_data.nlargest(10, 'Total Traffic')
-        }
-        
-        return aggregated_data, top_10_customers
-
+    
+    # Compute cluster statistics
+   
+    #aggregrate mmetrics per customer 
     aggregated_data, top_10_customers = aggregate_metrics_per_customer(df)
-
-    st.subheader("Top 10 Customers by Engagement Metrics")
-    metric = st.selectbox("Select Metric", ["Sessions", "Duration", "Total Traffic"])
-    st.dataframe(top_10_customers[metric])
-
-    # Normalize and cluster
-    @st.cache_data
-    def normalize_and_cluster(aggregated_data):
-        normalized_data = scale_and_normalize(aggregated_data, ['Sessions', 'Duration', 'Total Traffic'])
-        kmeans = KMeans(n_clusters=3, random_state=42)
-        normalized_data['Cluster'] = kmeans.fit_predict(normalized_data)
-        return normalized_data, kmeans
+    st.subheader("Top 10 Customer by number of session")
+    print("Top 10 customers by number of sessions:")
+    print(top_10_customers['Sessions'])
 
     normalized_data, kmeans = normalize_and_cluster(aggregated_data)
-
-    st.subheader("K-means Clustering (k=3)")
-    st.write("Normalized data with cluster assignments:")
-    st.dataframe(normalized_data)
-
     # Compute cluster statistics
-    @st.cache_data
-    def compute_cluster_stats(aggregated_data, normalized_data):
-        aggregated_data['Cluster'] = normalized_data['Cluster']
-        return aggregated_data.groupby('Cluster').agg(['min', 'max', 'mean', 'sum'])
-
+    st.subheader("Cluster statistics")
     cluster_stats = compute_cluster_stats(aggregated_data, normalized_data)
-    st.subheader("Cluster Statistics")
-    st.dataframe(cluster_stats)
+    print("\nCluster statistics:")
+    cluster_stats
 
     # Visualize cluster statistics
-    st.subheader("Average Metrics per Cluster")
+    st.subheader("Visualization of Cluster statistics")
     fig, axes = plt.subplots(1, 3, figsize=(20, 6))
     metrics = ['Sessions', 'Duration', 'Total Traffic']
 
@@ -186,8 +140,9 @@ elif task == "Task 2: User Engagement":
         axes[i].set_ylabel(f'Average {metric}')
 
     plt.tight_layout()
+    plt.show()
     st.pyplot(fig)
-
+    
     # Aggregate user total traffic per application
     @st.cache_data
     def aggregate_traffic_per_app(df):
@@ -234,29 +189,6 @@ elif task == "Task 2: User Engagement":
     top_apps_fig = plot_top_apps(df)
     st.pyplot(top_apps_fig)
 
-    # Elbow method for optimal k
-    @st.cache_data
-    def elbow_method(aggregated_data):
-        data = scale_and_normalize(aggregated_data, ['Sessions', 'Duration', 'Total Traffic'])
-        inertias = []
-        k_range = range(1, 11)
-        
-        for k in k_range:
-            kmeans = KMeans(n_clusters=k, random_state=42)
-            kmeans.fit(data)
-            inertias.append(kmeans.inertia_)
-        
-        fig, ax = plt.subplots(figsize=(10, 6))
-        ax.plot(k_range, inertias, 'bx-')
-        ax.set_xlabel('k')
-        ax.set_ylabel('Inertia')
-        ax.set_title('Elbow Method for Optimal k')
-        return fig
-
-    st.subheader("Elbow Method for Optimal k")
-    elbow_fig = elbow_method(aggregated_data)
-    st.pyplot(elbow_fig)
-
     # Engagement patterns over time
     st.subheader("Engagement Patterns Over Time")
     df['Start'] = pd.to_datetime(df['Start'])
@@ -282,4 +214,92 @@ elif task == "Task 2: User Engagement":
 
     # Interpretation and recommendations
 
-st.sidebar.info("Select a task from the dropdown menu to view different analyses.")
+    st.sidebar.info("Select a task from the dropdown menu to view different sample analyses.")
+
+
+elif task == "User Experience Analytics":
+    st.header("Experience Analytics")
+
+    # Aggregate customer data
+    aggregated_data = aggregate_customer_data(df)
+
+    st.subheader("Aggregated Customer Data")
+    st.dataframe(aggregated_data.head())
+
+    # Top, bottom, and most frequent values
+    metrics = ['Avg TCP Retrans', 'Avg RTT', 'Avg Throughput']
+    selected_metric = st.selectbox("Select Metric", metrics)
+    top, bottom, frequent = get_top_bottom_frequent(aggregated_data, selected_metric)
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.write("Top 10")
+        st.write(top)
+    with col2:
+        st.write("Bottom 10")
+        st.write(bottom)
+    with col3:
+        st.write("Most Frequent 10")
+        st.write(frequent)
+
+    # Distribution plots
+    st.subheader("Distribution Plots")
+    fig, ax = plt.subplots(figsize=(12, 6))
+    sns.boxplot(x='Handset Type', y=selected_metric, data=aggregated_data, ax=ax)
+    plt.title(f'{selected_metric} Distribution per Handset Type')
+    plt.xticks(rotation=90)
+    st.pyplot(fig)
+
+    # K-means clustering
+    st.subheader("K-means Clustering")
+    clustered_data, cluster_centers = perform_kmeans_clustering(aggregated_data)
+    
+    features = ['Avg TCP Retrans', 'Avg RTT', 'Avg Throughput']
+    cluster_descriptions = describe_clusters(clustered_data, cluster_centers, features)
+    
+    for desc in cluster_descriptions:
+        st.text(desc)
+
+    # Visualize clusters
+    fig, ax = plt.subplots(figsize=(12, 8))
+    sns.scatterplot(data=clustered_data, x='Avg Throughput', y='Avg RTT', hue='Cluster', palette='deep', ax=ax)
+    plt.title('Customer Clusters based on Experience Metrics')
+    st.pyplot(fig)
+
+    # Correlation heatmap
+    st.subheader("Correlation Heatmap of Experience Metrics")
+    correlation_matrix = clustered_data[features].corr()
+    fig, ax = plt.subplots(figsize=(10, 8))
+    sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', vmin=-1, vmax=1, center=0, ax=ax)
+    st.pyplot(fig)
+
+    # Distribution of experience metrics
+    st.subheader("Distribution of Experience Metrics")
+    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+    for i, feature in enumerate(features):
+        sns.histplot(clustered_data[feature], kde=True, ax=axes[i])
+        axes[i].set_title(f'Distribution of {feature}')
+    plt.tight_layout()
+    st.pyplot(fig)
+
+    # Cluster centroids comparison
+    st.subheader("Comparison of Cluster Centroids")
+    centroid_df = pd.DataFrame(cluster_centers, columns=features)
+    centroid_df = centroid_df.melt(var_name='Metric', value_name='Value')
+    centroid_df['Cluster'] = np.repeat(range(3), 3)
+    
+    fig, ax = plt.subplots(figsize=(12, 6))
+    sns.barplot(x='Metric', y='Value', hue='Cluster', data=centroid_df, ax=ax)
+    st.pyplot(fig)
+
+    # Experience metrics by handset manufacturer
+    st.subheader("Experience Metrics by Handset Manufacturer")
+    aggregated_data['Handset Manufacturer'] = aggregated_data['Handset Type'].apply(lambda x: x.split()[0])
+    manufacturer_metrics = aggregated_data.groupby('Handset Manufacturer')[features].mean()
+    
+    fig, ax = plt.subplots(figsize=(12, 6))
+    sns.heatmap(manufacturer_metrics, annot=True, cmap='YlGnBu', fmt='.2f', ax=ax)
+    plt.title('Average Experience Metrics by Handset Manufacturer')
+    st.pyplot(fig)
+
+    st.sidebar.info("Select a task from the dropdown menu to view different analyses.")

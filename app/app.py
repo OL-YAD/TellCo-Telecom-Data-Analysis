@@ -11,9 +11,9 @@ sys.path.append(os.path.abspath(os.path.join('..')))
 
 
 # Import functions from script file
-from scripts.data_processing import *
-from scripts.user_engagement import *
-from scripts.experience_analytics import *
+#from scripts.data_processing import *
+#from scripts.user_engagement import *
+#from scripts.experience_analytics import *
 
 
 # Load your data

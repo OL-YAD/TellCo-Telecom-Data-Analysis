@@ -6,21 +6,20 @@ import seaborn as sns
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 import os, sys 
-sys.path.append(os.path.abspath(os.path.join('..')))
-# Import functions from your script file
-from scripts.data_processing import (
-    get_top_handsets, get_top_manufacturers, get_top_handsets_per_manufacturer,
-    aggregate_user_behavior, segment_users, perform_pca, interpret_pca
-)
 
+sys.path.append(os.path.abspath(os.path.join('..')))
+
+
+# Import functions from script file
 from scripts.user_engagement import *
 from scripts.experience_analytics import *
 from scripts.data_processing import *
-#correlation_analysis
+
+
 # Load your data
 @st.cache_data
 def load_data():
-    # Replace this with your actual data loading logic
+    
     df = pd.read_csv("../data/cleaned_telecom_data.csv")
     return df
 
@@ -41,7 +40,6 @@ if task == "User Overview Analysis":
         st.dataframe(df.dtypes.reset_index().rename(columns={0: 'Data Type', 'index': 'Field'}))
 
         # 2. Top 10 handsets
-
         st.subheader("2. Top 10 Handsets Used by Customers")
         top_10_handsets = get_top_handsets(df)
         fig, ax = plt.subplots(figsize=(10, 6))
@@ -85,8 +83,6 @@ if task == "User Overview Analysis":
         st.pyplot(fig)
 
         # 6. Correlation heatmap
-        # Correlation Analysis
-        # total data for each category
         st.subheader("6. Correlation Matrix of Application Data Usage ")
         df["Youtube_Total_Data"] = df["Youtube DL (Bytes)"] + df["Youtube UL (Bytes)"]
         df["Google_Total_Data"] = df["Google DL (Bytes)"] + df["Google UL (Bytes)"]
@@ -211,8 +207,6 @@ elif task == "User Engagement Analysis":
 
     plt.tight_layout()
     st.pyplot(fig)
-
-    # Interpretation and recommendations
 
     st.sidebar.info("Select a task from the dropdown menu to view different sample analyses.")
 

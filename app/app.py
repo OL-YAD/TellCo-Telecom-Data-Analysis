@@ -20,7 +20,9 @@ from scripts.data_processing import *
 @st.cache_data
 def load_data():
     
-    df = pd.read_csv("../data/cleaned_telecom_data.csv")
+    df = pd.read_csv("https://drive.google.com/file/d/15lkJdPKglIXYiHywyduDAuusKpff5i1i/view?usp=sharing")
+    #df = pd.read_csv("../data/cleaned_telecom_data.csv")
+    
     return df
 
 df = load_data()

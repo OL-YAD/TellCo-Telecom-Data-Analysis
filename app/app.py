@@ -21,7 +21,7 @@ from scripts.experience_analytics import *
 def load_data():
     
     
-    df = pd.read_csv("../data/cleaned_telecom_data.csv")
+    df = pd.read_csv('https://raw.githubusercontent.com/OL-YAD/TellCo-Telecom-Data-Analysis/main/data/cleaned_telecom_data.csv')
     
     return df
 

@@ -101,4 +101,7 @@ def elbow_method(df: pd.DataFrame, max_k: int = 10) -> plt.Figure:
     ax.set_xlabel('Number of Clusters (k)')
     ax.set_ylabel('Inertia')
     
+
     return fig
+
+

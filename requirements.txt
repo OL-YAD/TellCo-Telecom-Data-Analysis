@@ -34,6 +34,8 @@ MarkupSafe==2.1.5
 matplotlib==3.9.2
 matplotlib-inline==0.1.7
 mdurl==0.1.2
+mysql-connector-python==9.0.0
+mysqlclient==2.2.4
 narwhals==1.6.4
 nest-asyncio==1.6.0
 numpy==2.1.1
@@ -56,6 +58,7 @@ pyparsing==3.1.4
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 pytz==2024.1
+pywin32==306
 pyzmq==26.2.0
 referencing==0.35.1
 requests==2.32.3

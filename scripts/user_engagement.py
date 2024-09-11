@@ -27,6 +27,7 @@ def aggregate_metrics_per_customer(df: pd.DataFrame) -> pd.DataFrame:
     
     return aggregated, top_10
 
+
 def normalize_and_cluster(df: pd.DataFrame, k: int = 3) -> Tuple[pd.DataFrame, KMeans]:
     """
     Normalize engagement metrics and run k-means clustering.

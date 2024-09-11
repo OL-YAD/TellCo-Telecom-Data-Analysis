@@ -77,7 +77,7 @@ To run the Streamlit app locally:
 
 ## Data Sources
 
-- Tellco Data Channel (XDR) Records
+- Tellco Data Channel (XDR) Records- Contains information about user sessions, traffic data, and engagement    metrics.
 
 
 ## Contact
